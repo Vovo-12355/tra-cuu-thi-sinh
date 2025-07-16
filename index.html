@@ -3,11 +3,9 @@
 <head>
   <title>Tra Cứu Thí Sinh</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-    .container { background: #f5f5f5; padding: 20px; border-radius: 10px; }
-    input, button { padding: 10px; margin: 5px 0; width: 100%; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    td { padding: 10px; border-bottom: 1px solid #ddd; }
+    /* ... (giữ nguyên phần style cũ) ... */
+    .result-row { border-bottom: 1px solid #ddd; padding: 15px; }
+    .result-header { background: #f0f7ff; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -17,19 +15,13 @@
     <button onclick="traCuu()">Tra Cứu</button>
     
     <div id="ketQua" style="display:none;">
-      <table>
-        <tr><td><strong>Mã PTXT:</strong></td><td id="maPTXT"></td></tr>
-        <tr><td><strong>Họ và tên:</strong></td><td id="hoTen"></td></tr>
-        <tr><td><strong>Ngày sinh:</strong></td><td id="ngaySinh"></td></tr>
-        <tr><td><strong>SĐT:</strong></td><td id="sdt"></td></tr>
-        <tr><td><strong>Trường TN:</strong></td><td id="truongTN"></td></tr>
-        <tr><td><strong>Ghi chú:</strong></td><td id="ghiChu"></td></tr>
-      </table>
+      <h2>Kết quả tra cứu</h2>
+      <div id="resultContainer"></div>
     </div>
   </div>
 
   <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbySMFkEBl1ezg5TnsEpQMWcqfx-YhvTCZHqtymwTh-L3c7ZAFXmX4grj3SecRyGANk3kg/exec"; // Thay bằng URL từ Bước 3
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbySMFkEBl1ezg5TnsEpQMWcqfx-YhvTCZHqtymwTh-L3c7ZAFXmX4grj3SecRyGANk3kg/exec";
 
     function traCuu() {
       const cccd = document.getElementById("cccd").value;
@@ -38,16 +30,40 @@
       fetch(`${WEB_APP_URL}?cccd=${encodeURIComponent(cccd)}`)
         .then(response => response.json())
         .then(data => {
+          const container = document.getElementById("resultContainer");
+          container.innerHTML = ""; // Xóa kết quả cũ
+          
+          // Xử lý khi không tìm thấy
           if (data.error) {
             alert(data.error);
-          } else {
-            // Hiển thị kết quả
-            document.getElementById("maPTXT").textContent = data.maPTXT;
-            document.getElementById("hoTen").textContent = data.hoTen;
-            document.getElementById("ngaySinh").textContent = data.ngaySinh;
-            document.getElementById("sdt").textContent = data.sdt;
-            document.getElementById("truongTN").textContent = data.truongTN;
-            document.getElementById("ghiChu").textContent = data.ghiChu;
+            document.getElementById("ketQua").style.display = "none";
+            return;
+          }
+          
+          // Xử lý khi có nhiều kết quả
+          if (data.length > 0) {
+            // Hiển thị thông tin chung (chỉ 1 lần)
+            const header = `
+              <div class="result-row result-header">
+                <div>Họ và tên: ${data[0].hoTen}</div>
+                <div>Ngày sinh: ${data[0].ngaySinh}</div>
+                <div>SĐT: ${data[0].sdt}</div>
+                <div>Trường TN: ${data[0].truongTN}</div>
+              </div>
+            `;
+            container.innerHTML += header;
+            
+            // Hiển thị từng phương thức xét tuyển
+            data.forEach((result, index) => {
+              container.innerHTML += `
+                <div class="result-row">
+                  <strong>Phương thức ${index + 1}:</strong>
+                  <div>Mã PTXT: ${result.maPTXT}</div>
+                  <div>Ghi chú: ${result.ghiChu}</div>
+                </div>
+              `;
+            });
+            
             document.getElementById("ketQua").style.display = "block";
           }
         })
